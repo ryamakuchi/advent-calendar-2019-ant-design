@@ -1,72 +1,118 @@
 <template>
   <div class="container">
-    <div>
-      <logo />
-      <h1 class="title">
-        advent-calendar-2019-ant-design
-      </h1>
-      <h2 class="subtitle">
-        My dandy Nuxt.js project
-      </h2>
-      <div class="links">
+    <h1>
+      Nuxt.js Advent Calendar 2019
+    </h1>
+
+    <p>{{ comment }}</p>
+
+    <div class="calendar">
+      <a-card
+        v-for="dayName in dayNames"
+        :key="dayName"
+        :title="dayName"
+      ></a-card>
+
+      <a-card
+        v-for="day in days"
+        :key="day.date"
+        :title="day.date"
+      >
+        <a-card-meta>
+          <a-avatar
+            slot="avatar"
+            :src="day.authorImageUrl"
+            :alt="day.authorName"
+          />
+        </a-card-meta>
+
         <a
-          href="https://nuxtjs.org/"
+          :href="`https://qiita.com/${day.authorName}`"
           target="_blank"
-          class="button--green"
+          rel="noopener noreferrer"
+          class="author-name ellipsis"
         >
-          Documentation
+          {{ day.authorName }}
         </a>
-        <a
-          href="https://github.com/nuxt/nuxt.js"
+
+        <a v-if="day.articleUrl !== null"
+          :href="day.articleUrl"
           target="_blank"
-          class="button--grey"
+          rel="noopener noreferrer"
         >
-          GitHub
+          {{ day.comment }}
         </a>
-      </div>
+
+        <p v-else>
+          {{ day.comment }}
+        </p>
+      </a-card>
+
+      <a-card
+        v-for="day in [26, 27, 28]"
+        :key="day"
+        :title="day"
+      ></a-card>
     </div>
+
+    <p class="notice">
+      ※ このページはレスポンシブ対応していません。デスクトップサイズの画面でご覧ください。
+    </p>
   </div>
 </template>
 
 <script>
-import Logo from '~/components/Logo.vue'
+import { parse } from 'node-html-parser'
 
 export default {
-  components: {
-    Logo
+  async asyncData({ $axios }) {
+    const { data } = await $axios.get('https://qiita.com/advent-calendar/2019/nuxt-js')
+    const root = parse(data)
+    return {
+      comment: root.querySelector('.markdownContent').text,
+      dayNames: root.querySelectorAll('.adventCalendarCalendar_dayName').map(dayName => dayName.text),
+      days: root.querySelectorAll('.adventCalendarCalendar_day').map(day => {
+        const articleUrl = day.querySelector('.adventCalendarCalendar_comment').querySelector('a') ?
+          day.querySelector('.adventCalendarCalendar_comment').querySelector('a').attributes['href'] :
+          null
+        return {
+          date: day.querySelector('.adventCalendarCalendar_date').text,
+          authorName: day.querySelector('.adventCalendarCalendar_author').text.replace(/\s|&nbsp;/g, ''),
+          authorImageUrl: day.querySelector('.adventCalendarCalendar_authorIcon').attributes['src'],
+          comment: day.querySelector('.adventCalendarCalendar_comment').text,
+          articleUrl: articleUrl
+        }
+      })
+    }
   }
 }
 </script>
 
 <style>
 .container {
-  margin: 0 auto;
-  min-height: 100vh;
+  padding: 5%;
+}
+
+.calendar {
   display: flex;
-  justify-content: center;
-  align-items: center;
-  text-align: center;
+  flex-wrap: wrap;
+  border: 1px solid #e8e8e8;
 }
 
-.title {
-  font-family: 'Quicksand', 'Source Sans Pro', -apple-system, BlinkMacSystemFont,
-    'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+.calendar > .ant-card {
+  width: calc(100% / 7);
+  min-width: 120px;
+  border-radius: 0;
+}
+
+.calendar .author-name {
   display: block;
-  font-weight: 300;
-  font-size: 100px;
-  color: #35495e;
-  letter-spacing: 1px;
+  padding: 10px 0 20px;
+  margin-bottom: 20px;
+  border-bottom: 1px solid #e8e8e8;
 }
 
-.subtitle {
-  font-weight: 300;
-  font-size: 42px;
-  color: #526488;
-  word-spacing: 5px;
-  padding-bottom: 15px;
-}
-
-.links {
-  padding-top: 15px;
+.notice {
+  padding: 20px 0;
 }
 </style>

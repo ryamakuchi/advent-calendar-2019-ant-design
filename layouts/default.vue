@@ -70,7 +70,7 @@ html {
 }
 .ant-menu .brand-content {
   display: flex;
-  padding: 10px;
+  padding: 10px 0;
 }
 .ant-menu .float-right {
   float: right;
